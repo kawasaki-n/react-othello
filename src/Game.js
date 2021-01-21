@@ -1,9 +1,10 @@
 import { useState } from "react";
 import Board from './Board';
 
-const cellTypes = ["empty", "black", "white"];
+const cellTypes = ["empty", "black", "white", "puttable"];
 
 const Game = () => {
+    const initTurn = 1;
     const initSquares = Array(8).fill(0).map(() => Array(8).fill(0));
     initSquares[3][3] = 1;
     initSquares[4][4] = 1;
@@ -11,43 +12,41 @@ const Game = () => {
     initSquares[4][3] = 2;
 
     const [squares, setSquares] = useState(initSquares);
-    const [turn, setTurn] = useState(1);
-    const [status, setStatus] = useState(cellTypes[turn] + "'s turn");
+    const [turn, setTurn] = useState(initTurn);
+    const [status, setStatus] = useState(cellTypes[initTurn] + "'s turn");
 
     const handleClick = (x, y) => {
         const currentSquares = squares.slice();
-        const currentTurn = turn;
 
-        const flipables = checkPutable(x, y, currentTurn, currentSquares);
-
+        const flipables = checkPutable(x, y, turn, currentSquares);
         if (flipables.length === 0) return;
 
-        executeFlip(flipables, currentSquares, currentTurn);
-        currentSquares[y][x] = currentTurn;
-        const nextTurn = turnChange(currentSquares, currentTurn);
+        executeFlip(flipables, currentSquares, turn);
+        currentSquares[y][x] = turn;
 
+        const nextTurn = turnChange(currentSquares, turn);
+
+        highlightPuttable(currentSquares, nextTurn);
+
+        let nextStatus = cellTypes[nextTurn] + "'s turn";
         if (nextTurn === 0) {
             // Game End
-            let status;
             const { winner, blackCount, whiteCount } = judgeWinner(currentSquares);
             if (winner === 0) {
-                status = "draw (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
+                nextStatus = "draw (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
             } else {
-                status = cellTypes[winner] + " win (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
+                nextStatus = cellTypes[winner] + " win (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
             }
-            setSquares(currentSquares);
-            setTurn(nextTurn);
-            setStatus(status);
-        } else {
-            setSquares(currentSquares);
-            setTurn(nextTurn);
-            setStatus(cellTypes[nextTurn] + "'s turn");
+            setStatus(nextStatus);
         }
+        setSquares(currentSquares);
+        setTurn(nextTurn);
+        setStatus(nextStatus);
     }
 
     const checkPutable = (x, y, currentTurn, currentSquares) => {
         let flipables = [];
-        if (currentSquares[y][x] !== 0) {
+        if (currentSquares[y][x] === 1 || currentSquares[y][x] === 2) {
             return flipables;
         }
         for (let dy = -1; dy <= 1; dy++) {
@@ -77,27 +76,6 @@ const Game = () => {
         });
     }
 
-    const judgeWinner = (currentSquares) => {
-        let winner = 0;
-        let blackCount = 0
-        let whiteCount = 0;
-        currentSquares.forEach((row) => {
-            row.forEach((cell) => {
-                if (cell === 1) {
-                    blackCount++;
-                } else {
-                    whiteCount++
-                }
-            });
-        });
-        if (blackCount > whiteCount) {
-            winner = 1;
-        } else if (blackCount < whiteCount) {
-            winner = 2;
-        }
-        return { "winner": winner, "blackCount": blackCount, "whiteCount": whiteCount };
-    }
-
     const turnChange = (currentSquares, currentTurn) => {
         let nextTurn = 3 - currentTurn;
 
@@ -124,6 +102,52 @@ const Game = () => {
         return 0;
     }
 
+    const highlightPuttable = (squares, turn) => {
+        if (turn === 0) {
+            return;
+        }
+
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                if (squares[y][x] === 1 || squares[y][x] === 2) {
+                    continue;
+                }
+                if (checkPutable(x, y, turn, squares).length > 0) {
+                    squares[y][x] = 3;
+                } else {
+                    squares[y][x] = 0;
+                }
+            }
+        }
+    }
+
+    const judgeWinner = (currentSquares) => {
+        let winner = 0;
+        let blackCount = 0
+        let whiteCount = 0;
+        currentSquares.forEach((row) => {
+            row.forEach((cell) => {
+                if (cell === 1) {
+                    blackCount++;
+                } else {
+                    whiteCount++
+                }
+            });
+        });
+        if (blackCount > whiteCount) {
+            winner = 1;
+        } else if (blackCount < whiteCount) {
+            winner = 2;
+        }
+        return { "winner": winner, "blackCount": blackCount, "whiteCount": whiteCount };
+    }
+
+    const retry = () => {
+        setSquares(initSquares);
+        setTurn(initTurn);
+        setStatus(cellTypes[initTurn] + "'s turn");
+    }
+
     return (
         <div className="game">
             <div className="game-board">
@@ -131,7 +155,8 @@ const Game = () => {
             </div>
             <div className="game-info">
                 <div>{status}</div>
-                <ol>{/* TODO */}</ol>
+                <br/>
+                {turn === 0 && <button onClick={() => retry()}>もう一度</button>}
             </div>
         </div>
     )
