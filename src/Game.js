@@ -24,10 +24,17 @@ const Game = () => {
         executeFlip(flipables, currentSquares, turn);
         currentSquares[y][x] = turn;
 
-        const nextTurn = turnChange(currentSquares, turn);
+        let nextTurn = turnChange(currentSquares, turn);
+        if (nextTurn === 2) {
+            // Computer turn
+            const puttable = calcPuttable(currentSquares, nextTurn);
+            const nextPut = puttable[0];
+            executeFlip(nextPut.flipables, currentSquares, nextTurn);
+            currentSquares[nextPut.y][nextPut.x] = nextTurn;
+            nextTurn = turnChange(currentSquares, nextTurn);
+        }
 
         highlightPuttable(currentSquares, nextTurn);
-
         let nextStatus = cellTypes[nextTurn] + "'s turn";
         if (nextTurn === 0) {
             // Game End
@@ -129,7 +136,7 @@ const Game = () => {
             row.forEach((cell) => {
                 if (cell === 1) {
                     blackCount++;
-                } else {
+                } else if (cell === 2) {
                     whiteCount++
                 }
             });
@@ -140,6 +147,30 @@ const Game = () => {
             winner = 2;
         }
         return { "winner": winner, "blackCount": blackCount, "whiteCount": whiteCount };
+    }
+
+    const calcPuttable = (squares, turn) => {
+        const ret = [];
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                if (squares[y][x] === 1 || squares[y][x] === 2) {
+                    continue;
+                }
+                const flipables = checkPutable(x, y, turn, squares);
+                if (flipables.length > 0) {
+                    ret.push({"x": x, "y": y, "flipables": flipables});
+                }
+            }
+        }
+        ret.sort((i, j) => {
+            if (i.flipables.length > j.flipables.length) {
+                return -1;
+            } else if (i.flipables.length < j.flipables.length) {
+                return 1;
+            }
+            return 0;
+        });
+        return ret;
     }
 
     const retry = () => {
