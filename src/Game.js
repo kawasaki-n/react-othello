@@ -13,7 +13,7 @@ const Game = () => {
 
     const [squares, setSquares] = useState(initSquares);
     const [turn, setTurn] = useState(initTurn);
-    const [status, setStatus] = useState(cellTypes[initTurn] + "'s turn");
+    const [status, setStatus] = useState("あなたの番です。");
 
     const handleClick = (x, y) => {
         const currentSquares = squares.slice();
@@ -25,7 +25,7 @@ const Game = () => {
         currentSquares[y][x] = turn;
 
         let nextTurn = turnChange(currentSquares, turn);
-        if (nextTurn === 2) {
+        while (nextTurn === 2) {
             // Computer turn
             const puttable = calcPuttable(currentSquares, nextTurn);
             const nextPut = puttable[0];
@@ -35,14 +35,16 @@ const Game = () => {
         }
 
         highlightPuttable(currentSquares, nextTurn);
-        let nextStatus = cellTypes[nextTurn] + "'s turn";
+        let nextStatus = "あなたの番です。";
         if (nextTurn === 0) {
             // Game End
             const { winner, blackCount, whiteCount } = judgeWinner(currentSquares);
             if (winner === 0) {
-                nextStatus = "draw (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
-            } else {
-                nextStatus = cellTypes[winner] + " win (blackCount: " + blackCount + " whiteCount: " + whiteCount + ")";
+                nextStatus = "引き分け (黒: " + blackCount + " 白: " + whiteCount + ")";
+            } else if (winner === 1) {
+                nextStatus = "あなたの勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
+            } else if (winner === 2) {
+                nextStatus = "コンピュータの勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
             }
             setStatus(nextStatus);
         }
@@ -176,7 +178,7 @@ const Game = () => {
     const retry = () => {
         setSquares(initSquares);
         setTurn(initTurn);
-        setStatus(cellTypes[initTurn] + "'s turn");
+        setStatus("あなたの番です。");
     }
 
     return (
@@ -185,7 +187,7 @@ const Game = () => {
                 <Board squares={squares} turn={turn} onClick={(x, y) => handleClick(x, y)} cellTypes={cellTypes} />
             </div>
             <div className="game-info">
-                <div>{status}</div>
+                <div className="status">{status}</div>
                 <br/>
                 {turn === 0 && <button onClick={() => retry()}>もう一度</button>}
             </div>
