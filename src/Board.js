@@ -2,7 +2,7 @@ import Square from './Square';
 
 const Board = (props) => {
     const renderSquare = (x, y, value) => {
-        return <Square key={x+","+y} top={y*64} left={x*64} value={value} onClick={() => props.onClick(x, y)} cellTypes={props.cellTypes} />;
+        return <Square key={x+","+y} top={y*32} left={x*32} value={value} onClick={() => props.onClick(x, y)} cellTypes={props.cellTypes} />;
     }
 
     const boardDom = [];
