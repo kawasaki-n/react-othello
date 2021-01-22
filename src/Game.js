@@ -13,7 +13,7 @@ const Game = () => {
 
     const [squares, setSquares] = useState(initSquares);
     const [turn, setTurn] = useState(initTurn);
-    const [status, setStatus] = useState("あなたの番です。");
+    const [status, setStatus] = useState("あなた（黒）の番です。");
 
     const handleClick = (x, y) => {
         const currentSquares = squares.slice();
@@ -35,16 +35,16 @@ const Game = () => {
         }
 
         highlightPuttable(currentSquares, nextTurn);
-        let nextStatus = "あなたの番です。";
+        let nextStatus = "あなた（黒）の番です。";
         if (nextTurn === 0) {
             // Game End
             const { winner, blackCount, whiteCount } = judgeWinner(currentSquares);
             if (winner === 0) {
                 nextStatus = "引き分け (黒: " + blackCount + " 白: " + whiteCount + ")";
             } else if (winner === 1) {
-                nextStatus = "あなたの勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
+                nextStatus = "あなた（黒）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
             } else if (winner === 2) {
-                nextStatus = "コンピュータの勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
+                nextStatus = "コンピュータ（白）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
             }
             setStatus(nextStatus);
         }
@@ -178,7 +178,7 @@ const Game = () => {
     const retry = () => {
         setSquares(initSquares);
         setTurn(initTurn);
-        setStatus("あなたの番です。");
+        setStatus("あなた（黒）の番です。");
     }
 
     return (
