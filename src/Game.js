@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Board from './Board';
 
 const cellTypes = ["empty", "black", "white", "puttable"];
@@ -14,40 +14,42 @@ const Game = () => {
     const [squares, setSquares] = useState(initSquares);
     const [turn, setTurn] = useState(initTurn);
     const [status, setStatus] = useState("あなた（黒）の番です。");
+    useEffect(() => {
+        const handleComputer = () => {
+            if (turn !== 2) {
+                return;
+            }
+            const puttable = calcPuttable(squares, turn);
+            const nextPut = puttable[0];
+            handleClick(nextPut.x, nextPut.y);
+        };
+        const timeout = setTimeout(() => handleComputer(), 500);
+        return () => clearTimeout(timeout);
+    }, [squares, turn]);
 
     const handleClick = (x, y) => {
         const currentSquares = squares.slice();
+        const currentTurn = turn;
 
-        const flipables = checkPutable(x, y, turn, currentSquares);
+        const flipables = checkPutable(x, y, currentTurn, currentSquares);
         if (flipables.length === 0) return;
 
-        executeFlip(flipables, currentSquares, turn);
+        executeFlip(flipables, currentSquares, currentTurn);
         currentSquares[y][x] = turn;
 
-        let nextTurn = turnChange(currentSquares, turn);
-        while (nextTurn === 2) {
-            // Computer turn
-            const puttable = calcPuttable(currentSquares, nextTurn);
-            const nextPut = puttable[0];
-            executeFlip(nextPut.flipables, currentSquares, nextTurn);
-            currentSquares[nextPut.y][nextPut.x] = nextTurn;
-            nextTurn = turnChange(currentSquares, nextTurn);
-        }
-
+        let nextTurn = turnChange(currentSquares, currentTurn);
         highlightPuttable(currentSquares, nextTurn);
-        let nextStatus = "あなた（黒）の番です。";
+
+        let nextStatus;
         if (nextTurn === 0) {
             // Game End
-            const { winner, blackCount, whiteCount } = judgeWinner(currentSquares);
-            if (winner === 0) {
-                nextStatus = "引き分け (黒: " + blackCount + " 白: " + whiteCount + ")";
-            } else if (winner === 1) {
-                nextStatus = "あなた（黒）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
-            } else if (winner === 2) {
-                nextStatus = "コンピュータ（白）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
-            }
-            setStatus(nextStatus);
+            nextStatus = judgeWinner(currentSquares);
+        } else if (nextTurn === 1) {
+            nextStatus = "あなた（黒）の番です。";
+        } else {
+            nextStatus = "コンピュータ（白）の番です。";
         }
+
         setSquares(currentSquares);
         setTurn(nextTurn);
         setStatus(nextStatus);
@@ -131,7 +133,6 @@ const Game = () => {
     }
 
     const judgeWinner = (currentSquares) => {
-        let winner = 0;
         let blackCount = 0
         let whiteCount = 0;
         currentSquares.forEach((row) => {
@@ -144,11 +145,12 @@ const Game = () => {
             });
         });
         if (blackCount > whiteCount) {
-            winner = 1;
+            return "あなた（黒）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
         } else if (blackCount < whiteCount) {
-            winner = 2;
+            return "コンピュータ（白）の勝ちです。 (黒: " + blackCount + " 白: " + whiteCount + ")";
+        } else {
+            return "引き分け (黒: " + blackCount + " 白: " + whiteCount + ")";
         }
-        return { "winner": winner, "blackCount": blackCount, "whiteCount": whiteCount };
     }
 
     const calcPuttable = (squares, turn) => {
