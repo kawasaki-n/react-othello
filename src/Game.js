@@ -193,6 +193,9 @@ const Game = () => {
                 <br/>
                 {turn === 0 && <button onClick={() => retry()}>もう一度</button>}
             </div>
+            <div>
+                <span>Hello World!</span>
+            </div>
         </div>
     )
 }
